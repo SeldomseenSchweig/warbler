@@ -143,6 +143,7 @@ def users_show(user_id):
     """Show user profile."""
 
     user = User.query.get_or_404(user_id)
+    
 
     # snagging messages in order from the database;
     # user.messages won't be in order by default
@@ -152,7 +153,9 @@ def users_show(user_id):
                 .order_by(Message.timestamp.desc())
                 .limit(100)
                 .all())
-    return render_template('users/show.html', user=user, messages=messages)
+    messages = g.user.likes
+    num_likes = len(messages)
+    return render_template('users/show.html', user=user, messages=messages, num_likes = num_likes)
 
 
 @app.route('/users/<int:user_id>/following')
@@ -164,7 +167,10 @@ def show_following(user_id):
         return redirect("/")
 
     user = User.query.get_or_404(user_id)
-    return render_template('users/following.html', user=user)
+    likes = g.user.likes
+    num_likes = len(likes)
+
+    return render_template('users/following.html', user=user, num_likes=num_likes)
 
 
 @app.route('/users/<int:user_id>/followers')
@@ -174,9 +180,11 @@ def users_followers(user_id):
     if not g.user:
         flash("Access unauthorized.", "danger")
         return redirect("/")
+    likes = g.user.likes
+    num_likes = len(likes)
 
     user = User.query.get_or_404(user_id)
-    return render_template('users/followers.html', user=user)
+    return render_template('users/followers.html', user=user, num_likes=num_likes)
 
 
 @app.route('/users/follow/<int:follow_id>', methods=['POST'])
@@ -252,6 +260,24 @@ def delete_user():
     return redirect("/signup")
 
 
+@app.route('/users/add_like/<int:msg_id>', methods=["POST"])
+def add_like(msg_id):
+
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+
+    like = Message.query.get(msg_id)
+    g.user.likes.append(like)
+    db.session.commit()
+
+    return redirect(f"/users/{g.user.id}")
+
+
+
+
+
+
 ##############################################################################
 # Messages routes:
 
@@ -299,6 +325,9 @@ def messages_destroy(message_id):
     db.session.commit()
 
     return redirect(f"/users/{g.user.id}")
+
+
+
 
 
 ##############################################################################
