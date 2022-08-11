@@ -131,9 +131,9 @@ def list_users():
     search = request.args.get('q')
 
     if not search:
-        users = User.query.all()
+        users = User.query.limit(100).all()
     else:
-        users = User.query.filter(User.username.like(f"%{search}%")).all()
+        users = User.query.filter(User.username.like(f"%{search}%")).limit(100).all()
 
     return render_template('users/index.html', users=users)
 
