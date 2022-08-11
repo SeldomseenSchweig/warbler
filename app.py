@@ -153,7 +153,6 @@ def users_show(user_id):
                 .order_by(Message.timestamp.desc())
                 .limit(100)
                 .all())
-    messages = g.user.likes
     num_likes = len(messages)
     return render_template('users/show.html', user=user, messages=messages, num_likes=num_likes)
 
