@@ -155,7 +155,7 @@ def users_show(user_id):
                 .all())
     messages = g.user.likes
     num_likes = len(messages)
-    return render_template('users/show.html', user=user, messages=messages, num_likes = num_likes)
+    return render_template('users/show.html', user=user, messages=messages, num_likes=num_likes)
 
 
 @app.route('/users/<int:user_id>/following')
@@ -273,6 +273,13 @@ def add_like(msg_id):
 
     return redirect(f"/users/{g.user.id}")
 
+@app.route('/users/likes')
+def list_likes():
+    likes = g.user.likes
+    num_likes = len(likes)
+    
+    return render_template('users/show_liked_messages.html', likes=likes, num_likes=num_likes, user=g.user)
+
 
 
 
@@ -312,19 +319,19 @@ def messages_show(message_id):
     return render_template('messages/show.html', message=msg)
 
 
-@app.route('/messages/<int:message_id>/delete', methods=["POST"])
-def messages_destroy(message_id):
-    """Delete a message."""
+# @app.route('/messages/<int:message_id>/delete', methods=["POST"])
+# def messages_destroy(message_id):
+#     """Delete a message."""
 
-    if not g.user:
-        flash("Access unauthorized.", "danger")
-        return redirect("/")
+#     if not g.user:
+#         flash("Access unauthorized.", "danger")
+#         return redirect("/")
 
-    msg = Message.query.get(message_id)
-    db.session.delete(msg)
-    db.session.commit()
+#     msg = Message.query.get(message_id)
+#     db.session.delete(msg)
+#     db.session.commit()
 
-    return redirect(f"/users/{g.user.id}")
+#     return redirect(f"/users/{g.user.id}")
 
 
 
@@ -348,6 +355,8 @@ def homepage():
                     .order_by(Message.timestamp.desc())
                     .limit(100)
                     .all())
+        user = g.user
+  
 
         return render_template('home.html', messages=messages)
 
