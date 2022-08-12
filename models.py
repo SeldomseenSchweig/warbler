@@ -1,6 +1,7 @@
 """SQLAlchemy models for Warbler."""
 
 from datetime import datetime
+from tkinter import CASCADE
 
 from flask_bcrypt import Bcrypt
 from flask_sqlalchemy import SQLAlchemy
@@ -94,7 +95,7 @@ class User(db.Model):
         nullable=False,
     )
 
-    messages = db.relationship('Message')
+    messages = db.relationship('Message',cascade="all, delete-orphan", single_parent=True)
 
     followers = db.relationship(
         "User",
