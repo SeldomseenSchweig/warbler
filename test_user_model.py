@@ -175,8 +175,6 @@ class UserModelTestCase(TestCase):
         self.assertEqual(u2.is_followed_by(u1), False)
 
 
-
-
     def test_signup(self):
         """Does sign up model work?"""
         # Does User.create successfully create a new user given valid credentials?
@@ -189,21 +187,47 @@ class UserModelTestCase(TestCase):
 
         self.assertIsInstance(user, User)
 
-    def test_bad_signup(self):
-        """Does sign up model work?"""
-        # Does User.create fail to create a new user if any of the validations (e.g. uniqueness, non-nullable fields) fail?
+    def test_authenticate(self):
+        """Does User.authenticate successfully 
+        return a user when given a valid username and password?"""
+
         email="test@test.com",
         username="u10",
         password="HASHED_PASSWORD"
-        image_url=''
-        user1 = User.signup(username, email, password, image_url)
-        db.session.commit()
-        user2 = User.signup(username, email, password, image_url)
-
-        self.assertRaises('sqlalchemy.exc.InvalidRequestError',db.session.commit())
+        User.signup(username, email, password, image_url='')
     
+        db.session.commit()
+
+        self.assertIsInstance(User.authenticate('u10', "HASHED_PASSWORD"), User)
 
 
-# Does User.authenticate successfully return a user when given a valid username and password?
-# Does User.authenticate fail to return a user when the username is invalid?
-# Does User.authenticate fail to return a user when the password is invalid?
+    def test_not_authenticate_password(self):
+            """Does User.authenticate  not 
+            return a user when a password is invalid?"""
+
+            email="test@test.com",
+            username="u11",
+            password="HASHED_PASSWORD"
+            User.signup(username, email, password, image_url='')
+        
+            db.session.commit()
+
+            self.assertNotIsInstance(User.authenticate('u11', "HASHED"), User)
+
+
+
+    def test_not_authenticate_password(self):
+        """Does User.authenticate not 
+        return a user when a username is invalid?"""
+
+        email="test@test.com",
+        username="u11",
+        password="HASHED_PASSWORD"
+        User.signup(username, email, password, image_url='')
+    
+        db.session.commit()
+
+        self.assertNotIsInstance(User.authenticate('u12', "HASHED_PASSWORD"), User)
+
+
+
