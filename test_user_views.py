@@ -1,4 +1,4 @@
-"""User model tests."""
+"""User view tests."""
 
 # run these tests like:
 #
@@ -7,7 +7,7 @@
 
 import os
 from unittest import TestCase
-
+from app import app
 from models import db, User, Message, Follows
 
 # BEFORE we import our app, let's set an environmental variable
@@ -16,6 +16,7 @@ from models import db, User, Message, Follows
 # connected to the database
 
 os.environ['DATABASE_URL'] = "postgresql:///warbler-test"
+app.config['DEBUG_TB_HOSTS'] = ['dont-show-debug-toolbar']
 
 
 # Now we can import app
@@ -27,17 +28,26 @@ from app import app
 # and create fresh new clean test data
 
 
-db.create_all()
 
 
 class UserViewTestCase(TestCase):
     """Tests for views for Users."""
 
+
+
+    def register(self,username, email, password):
+        return self.app.post(
+            '/register',
+            data=dict(username=username, email=email, password=password),
+            follow_redirects=True
+        )
+
+
     def setUp(self):
         """Add sample User. Add sample post"""
 
-        User.query.delete()
-        Message.query.delete()
+        # User.query.delete()
+        # Message.query.delete()
         db.drop_all()
         db.create_all()
 
@@ -48,36 +58,43 @@ class UserViewTestCase(TestCase):
         db.session.add(message)
         db.session.commit()
 
-        self.User_id = user.id
-        self.Post_id = message.id
 
     def tearDown(self):
         """Clean up any fouled transaction."""
-
         db.session.rollback()
-
-
-
-
+        
     def test_home(self):
-            with app.test_client() as client:
-                resp = client.get("/", follow_redirects=True)
-                html = resp.get_data(as_text=True)
-                self.assertEqual(resp.status_code, 200)
-                self.assertIn("<p>Sign up now to get your own personalized timeline!</p>", html)
+        with app.test_client() as client:
+            resp = client.get("/", follow_redirects=True)
+            html = resp.get_data(as_text=True)
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn("<p>Sign up now to get your own personalized timeline!</p>", html)
+
+
+    def test_signup(self):
+        """ Test for Handle signup form; add post and redirect to the user detail page."""
+        with app.test_client() as client:
+            d = {"username": "test1000", "email":"test@content.com", "password":'123456', "image_url":''}
+           
+            resp = client.post("/signup", data=d, follow_redirects=True) 
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn("<p>@test1000</p>", html)
 
 
 
 
-    # def test_signup(self):
 
-    #     with app.test_client() as client:
-    #         d = {"username": "test2", "email": "test2@test.com",
-    #             "password":'123456', "image_url":''}
-    #         resp = client.post("/signup", data=d, follow_redirects=True)
-    #         html = resp.get_data(as_text=True)
+    def test_signin(self):
+        """ Test for Handle add form; add post and redirect to the user detail page."""
+        with app.test_client() as client:
+            form = {"username": "test1", "password":'123456'}
+            resp = client.post("/login", data=form, follow_redirects=True)
+            html = resp.get_data(as_text=True)
 
-    #         self.assertEqual(resp.status_code, 200)
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn("test1", html)
 
 
 
