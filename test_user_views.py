@@ -7,8 +7,9 @@
 
 import os
 from unittest import TestCase
-from app import app
-from models import db, User, Message, Follows
+from app import CURR_USER_KEY, app
+from models import db, User, Message, Follows, connect_db
+from flask import session
 
 # BEFORE we import our app, let's set an environmental variable
 # to use a different database for tests (we need to do this
@@ -22,6 +23,8 @@ app.config['DEBUG_TB_HOSTS'] = ['dont-show-debug-toolbar']
 # Now we can import app
 
 from app import app
+connect_db(app)
+
 
 # Create our tables (we do this here, so we only create the tables
 # once for all tests --- in each test, we'll delete the data
@@ -75,10 +78,13 @@ class UserViewTestCase(TestCase):
         """ Test for Handle signup form; add post and redirect to the user detail page."""
         with app.test_client() as client:
             d = {"username": "test1000", "email":"test@content.com", "password":'123456', "image_url":''}
-           
-            resp = client.post("/signup", data=d, follow_redirects=True) 
+            resp = client.post("/signup", data=d, follow_redirects=True)
+
             html = resp.get_data(as_text=True)
 
+            test1000 = User.query.filter_by(username="test1000").first()
+            print(test1000)
+            self.assertEqual(session[CURR_USER_KEY], test1000.id)
             self.assertEqual(resp.status_code, 200)
             self.assertIn("<p>@test1000</p>", html)
 
