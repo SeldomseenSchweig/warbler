@@ -7,7 +7,7 @@
 
 import os
 from unittest import TestCase
-from app import CURR_USER_KEY, app
+from app import CURR_USER_KEY, app, g
 from models import db, User, Message, Follows, connect_db
 from flask import session
 
@@ -24,6 +24,7 @@ app.config['DEBUG_TB_HOSTS'] = ['dont-show-debug-toolbar']
 
 from app import app
 connect_db(app)
+
 
 
 # Create our tables (we do this here, so we only create the tables
@@ -49,8 +50,7 @@ class UserViewTestCase(TestCase):
     def setUp(self):
         """Add sample User. Add sample post"""
 
-        # User.query.delete()
-        # Message.query.delete()
+        app.config['WTF_CSRF_ENABLED'] = False
         db.drop_all()
         db.create_all()
 
@@ -77,16 +77,15 @@ class UserViewTestCase(TestCase):
     def test_signup(self):
         """ Test for Handle signup form; add post and redirect to the user detail page."""
         with app.test_client() as client:
-            d = {"username": "test1000", "email":"test@content.com", "password":'123456', "image_url":''}
+            d = {"username": "test2", "email":"test@content.com", "password":'123456', "image_url":''}
             resp = client.post("/signup", data=d, follow_redirects=True)
 
             html = resp.get_data(as_text=True)
 
-            test1000 = User.query.filter_by(username="test1000").first()
-            print(test1000)
-            self.assertEqual(session[CURR_USER_KEY], test1000.id)
+            
+            
             self.assertEqual(resp.status_code, 200)
-            self.assertIn("<p>@test1000</p>", html)
+            self.assertIn("<p>@test2</p>", html)
 
 
 
@@ -103,4 +102,12 @@ class UserViewTestCase(TestCase):
             self.assertIn("test1", html)
 
 
+    def test_show_following(self):
+        with app.test_client() as client:
+            with app.app_context():
+                g.user = User.query.filter_by(username="test1").first()
+                assert session["user_id"] == g.user.id
+            resp = client.get(f'/users/{g.user.id}/following', follow_redirects=True)
+            html = resp.get_data(as_text=True)
+            self.assertEqual(resp.status_code, 200)
 
