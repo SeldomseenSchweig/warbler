@@ -1,8 +1,9 @@
 {% extends 'users/detail.html' %}
-{% include 'follow.html' %}
 
-<!-- {% block user_details %}
-  <div class="col-sm-9">
+
+{% block user_details %}
+{% include 'users/follow.html' %}
+  <!-- <div class="col-sm-9">
     <div class="row">
 
       {% for followed_user in user.following %}
@@ -38,5 +39,5 @@
       {% endfor %}
 
     </div>
-  </div>
-{% endblock %} -->
+  </div> -->
+{% endblock %}
