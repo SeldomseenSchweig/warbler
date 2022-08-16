@@ -198,9 +198,3 @@ class UserViewTestCase(TestCase):
                 html = resp.get_data(as_text=True)
                 self.assertIn("Access unauthorized", html)
                 self.assertEqual(resp.status_code, 200)
-
-
-# When you’re logged out, are you prohibited from adding messages?
-# When you’re logged out, are you prohibited from deleting messages?
-# When you’re logged in, are you prohibiting from adding a message as another user?
-# When you’re logged in, are you prohibiting from deleting a message as another user?
