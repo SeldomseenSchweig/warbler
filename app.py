@@ -335,10 +335,16 @@ def messages_show(message_id):
 @app.route('/messages/<int:message_id>/delete', methods=["POST"])
 def messages_destroy(message_id):
     """Delete a message."""
+    m = Message.query.get(message_id)
 
     if not g.user:
         flash("Access unauthorized.", "danger")
         return redirect("/")
+        
+    if g.user.id != m.user_id:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+        
 
     msg = Message.query.get(message_id)
     db.session.delete(msg)

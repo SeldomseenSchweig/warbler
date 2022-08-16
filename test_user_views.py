@@ -54,12 +54,16 @@ class UserViewTestCase(TestCase):
         db.drop_all()
         db.create_all()
 
-        user = User.signup(username='test1',email='test1@test.com',password='123456', image_url='https://cdn.pixabay.com/photo/2016/09/14/23/06/poznan-1670738__340.jpg')
+        user1 = User.signup(username='test1',email='test1@test.com',password='123456', image_url='https://cdn.pixabay.com/photo/2016/09/14/23/06/poznan-1670738__340.jpg')
         db.session.commit()
-
-        message = Message(text="test_content", user_id = user.id)
+        user2 = User.signup(username='test3',email='test3@test.com',password='123456', image_url='https://cdn.pixabay.com/photo/2016/09/14/23/06/poznan-1670738__340.jpg')
+        db.session.commit()
+        message = Message(text="test_content", user_id = user1.id)
         db.session.add(message)
         db.session.commit()
+        user1.followers.append(user2)
+        db.session.commit()
+
 
 
     def tearDown(self):
@@ -103,11 +107,100 @@ class UserViewTestCase(TestCase):
 
 
     def test_show_following(self):
+        """ When youre logged in, can you see the follower pages for any user?"""
         with app.test_client() as client:
-            with app.app_context():
-                g.user = User.query.filter_by(username="test1").first()
-                assert session["user_id"] == g.user.id
-            resp = client.get(f'/users/{g.user.id}/following', follow_redirects=True)
-            html = resp.get_data(as_text=True)
-            self.assertEqual(resp.status_code, 200)
+                with client.session_transaction() as sess:
+                    user = User.query.filter_by(username='test3').first()
+                    sess[CURR_USER_KEY] = user.id
+                resp = client.get(f"/users/{user.id}/following")
+                html = resp.get_data(as_text=True)
+                self.assertIn("<p>@test1</p>", html)
+                self.assertEqual(resp.status_code, 200)
 
+    def test_show_followers(self):
+        """ When youre logged in, can you see the following pages for any user?"""
+        with app.test_client() as client:
+                with client.session_transaction() as sess:
+                    user = User.query.filter_by(username='test1').first()
+                    sess[CURR_USER_KEY] = user.id
+
+                resp = client.get(f"/users/{user.id}/followers")
+                html = resp.get_data(as_text=True)
+                self.assertIn("<p>@test3</p>", html)
+                self.assertEqual(resp.status_code, 200)
+
+
+    def test_show_followers_not_logged_in(self):
+        """ When youre logged out, are you disallowed from visiting a users follower / following pages??"""
+        with app.test_client() as client:
+                resp = client.get("/users/1/followers", follow_redirects=True)
+                html = resp.get_data(as_text=True)
+                self.assertIn("Access unauthorized.", html)
+                self.assertEqual(resp.status_code, 200)
+
+
+    def test_add_message(self):
+        """ When youre logged in, can you add a message as yourself?"""
+        with app.test_client() as client:
+                with client.session_transaction() as sess:
+                    user = User.query.filter_by(username='test3').first()
+                    sess[CURR_USER_KEY] = user.id
+                
+                print(sess[CURR_USER_KEY])
+                form = {"text":"Blah blah blah"}
+                resp = client.post('/messages/new', data=form, follow_redirects=True)
+                html = resp.get_data(as_text=True)
+                self.assertIn("Blah blah blah", html)
+                self.assertEqual(resp.status_code, 200)
+
+    def test_delete_message(self):
+        """ When youre logged in, can you delete a message as yourself?"""
+        with app.test_client() as client:
+                with client.session_transaction() as sess:
+                    user = User.query.filter_by(username='test1').first()
+                    sess[CURR_USER_KEY] = user.id
+                    m = Message.query.filter_by(user_id=user.id).first()
+                form = {"id":m.id}
+                resp = client.post(f'/messages/{m.id}/delete', data=form, follow_redirects=True)
+                html = resp.get_data(as_text=True)
+                self.assertNotIn("test_content", html)
+                self.assertEqual(resp.status_code, 200)
+
+
+
+    def test_delete_message_not_owned(self):
+        """ When youre logged in, can you delete a message as you don't own?"""
+        with app.test_client() as client:
+                with client.session_transaction() as sess:
+                    user = User.query.filter_by(username='test3').first()
+                    sess[CURR_USER_KEY] = user.id
+                    m = Message.query.filter_by(user_id=1).first()
+                form = {"id":m.id}
+                resp = client.post(f'/messages/{m.id}/delete', data=form, follow_redirects=True)
+                html = resp.get_data(as_text=True)
+                self.assertIn("Access unauthorized", html)
+                self.assertEqual(resp.status_code, 200)
+
+    def test_delete_message_not_logged_in(self):
+        """ When youre logged out, can you delete a message"""
+        with app.test_client() as client:
+                form = {"id":1}
+                resp = client.post(f'/messages/1/delete', data=form, follow_redirects=True)
+                html = resp.get_data(as_text=True)
+                self.assertIn("Access unauthorized", html)
+                self.assertEqual(resp.status_code, 200)
+
+    def test_add_message_not_logged_in(self):
+        """ When youre logged out, can you add a message?"""
+        with app.test_client() as client:
+                form = {"text":"Blah blah blah"}
+                resp = client.post('/messages/new', data=form, follow_redirects=True)
+                html = resp.get_data(as_text=True)
+                self.assertIn("Access unauthorized", html)
+                self.assertEqual(resp.status_code, 200)
+
+
+# When you’re logged out, are you prohibited from adding messages?
+# When you’re logged out, are you prohibited from deleting messages?
+# When you’re logged in, are you prohibiting from adding a message as another user?
+# When you’re logged in, are you prohibiting from deleting a message as another user?
