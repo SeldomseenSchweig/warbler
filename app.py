@@ -14,7 +14,7 @@ app = Flask(__name__)
 # Get DB_URI from environ variable (useful for production/testing) or,
 # if not set there, use development local db.
 app.config['SQLALCHEMY_DATABASE_URI'] = (
-    os.environ.get('DATABASE_URL', 'postgresql:///warbler-test'))
+    os.environ.get('DATABASE_URL', 'postgresql:///warbler'))
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ECHO'] = False
@@ -221,6 +221,7 @@ def stop_following(follow_id):
 def profile():
     """Update profile for current user."""
     form = UserEditForm(obj=g.user)
+    user = User.query.get_or_404(g.user.id)
     if not g.user:
         flash("Access unauthorized.", "danger")
         return redirect("/")
@@ -230,6 +231,7 @@ def profile():
         g.user.image_url = form.image_url.data
         g.user.header_image_url = form.header_image_url.data
         g.user.bio = form.bio.data
+
         
         user = User.authenticate(g.user.username,
                                  form.password.data)
@@ -290,8 +292,9 @@ def remove_like(msg_id):
 def list_likes():
     likes = g.user.likes
     num_likes = len(likes)
-    
+    messages=[]
     return render_template('users/show_liked_messages.html', likes=likes, num_likes=num_likes, user=g.user)
+      
 
 
 

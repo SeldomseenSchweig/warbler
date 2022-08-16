@@ -14,7 +14,7 @@
           <li class="stat">
             <p class="small">Messages</p>
             <h4>
-              <a href="/users/{{ user.id }}">{{ user.messages | length }}</a>
+              <a href="{{url_for('users_show')}}">{{ user.messages | length }}</a>
             </h4>
           </li>
           <li class="stat">
@@ -31,11 +31,11 @@
           </li>
           <li class="stat">
             <p class="small">Likes</p>
-            <h4><a href="/users/likes">{{num_likes}}</a></h4>
+            <h4><a href="{{ url_for('list_likes') }}">{{num_likes}}</a></h4>
           </li>
           <div class="ml-auto">
             {% if g.user.id == user.id %}
-            <a href="/users/profile" class="btn btn-outline-secondary">Edit Profile</a>
+            <a href="{{ url_for('profile') }}" class="btn btn-outline-secondary">Edit Profile</a>
             <form method="POST" action="/users/delete" class="form-inline">
               <button class="btn btn-outline-danger ml-2">Delete Profile</button>
             </form>
@@ -68,5 +68,6 @@
   {% endblock %}
 
 </div>
+
 
 {% endblock %}
