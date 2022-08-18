@@ -187,6 +187,18 @@ class UserModelTestCase(TestCase):
 
         self.assertIsInstance(user, User)
 
+    def test_invalid_signup(self):
+        """Does sign up model work?"""
+        # Does User.create successfully create a new user given valid credentials?
+
+        email="test@test.com",
+        username="u9hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh",
+        password="HASHED"
+        image_url=''
+        user = User.signup(username, email, password, image_url)
+
+        self.assertNotIsInstance(user, User)
+
     def test_authenticate(self):
         """Does User.authenticate successfully 
         return a user when given a valid username and password?"""
@@ -216,7 +228,7 @@ class UserModelTestCase(TestCase):
 
 
 
-    def test_not_authenticate_password(self):
+    def test_not_authenticate_username(self):
         """Does User.authenticate not 
         return a user when a username is invalid?"""
 
